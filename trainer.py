@@ -24,6 +24,7 @@ def valid(model, dev_loader, device, tokenizer):
     model.eval()
     pred_texts = []
     ans_texts = []
+    loss_sum = 0
     F1 = 0
     print("Validation start")
     with torch.no_grad():
@@ -42,15 +43,14 @@ def valid(model, dev_loader, device, tokenizer):
                 pred_text = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[b][pred_start_positions[b]:pred_end_positions[b]+1]))
                 ans_texts.append(ans_text)
                 pred_texts.append(pred_text)
-            print(f"ans text : {ans_text}, pred_text : {pred_text}")                
+            if iter%100 ==0:
+                print(f"ans text : {ans_text}, pred_text : {pred_text}")                
             loss = outputs[0].to('cpu')
+            loss_sum += loss
             t_dev_loader.set_description("Loss %.04f  | step %d" % (loss, iter))
-            break
     
-    return pred_texts, ans_texts
+    return pred_texts, ans_texts, loss_sum/iter
         
         
-
-            
 
             

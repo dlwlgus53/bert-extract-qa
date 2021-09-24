@@ -21,6 +21,7 @@ parser.add_argument('--max_epoch' ,  type = int, default=10)
 parser.add_argument('--pretrained_model' , type = str,  help = 'pretrainned model')
 parser.add_argument('--dataset_name' , required= True, type = str,  help = 'mrqa|squad|coqa')
 parser.add_argument('--gpu_number' , type = int,  default = 0, help = 'which GPU will you use?')
+parser.add_argument('--debugging' , type = bool,  default = False, help = 'Is this debuggin mode?')
 
 
 
@@ -29,7 +30,6 @@ args = parser.parse_args()
 if __name__ =="__main__":
 
     tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
-
     train_dataset = Dataset(args.dataset_name, tokenizer, "train")
     val_dataset = Dataset(args.dataset_name, tokenizer,  "validation") 
     model = BertForQuestionAnswering.from_pretrained("bert-base-uncased")
@@ -42,17 +42,19 @@ if __name__ =="__main__":
 
 
     if args.pretrained_model:
+        print("use trained model")
         model.load_state_dict(torch.load(args.pretrained_model))
 
     model.to(device)
     penalty = 0
-    max_F1 = 0
+    min_loss = 0
     for epoch in range(args.max_epoch):
+        print(f"Epoch : {epoch}")
         train(model, train_loader, optimizer, device)
 
         EM = 0
         F1 = 0 
-        pred_texts, ans_texts = valid(model, dev_loader, device, tokenizer)
+        pred_texts, ans_texts, loss = valid(model, dev_loader, device, tokenizer)
         for iter, (pred_text, ans_text) in enumerate(zip(pred_texts, ans_texts)):
             EM += compute_exact_match(pred_text, ans_text)
             F1 += compute_F1(pred_text, ans_text)
@@ -63,10 +65,11 @@ if __name__ =="__main__":
         writer.add_scalar("EM/train", EM/iter, epoch)
         writer.add_scalar("F1/train", F1/iter, epoch)
 
-        if (F1/iter) > max_F1:
-            max_F1 = F1/iter
+        if loss < min_loss:
+            min_loss = loss
             penalty = 0
-            torch.save(model.state_dict(), "model/qa_extraction.pt")
+            if not args.debugging:
+                torch.save(model.state_dict(), f"model/{args.dataset_name}.pt")
         else:
             penalty +=1
             if penalty>args.patience:

@@ -3,7 +3,7 @@ import torch
 import pickle
 from tqdm import tqdm
 batch_size = 4
-
+import pdb
 print("Load Tokenizer")
 # here, squad means squad2
 
@@ -14,20 +14,25 @@ class Dataset(torch.utils.data.Dataset):
 
         try:
             print("Load processed data")
-            with open('data/preprocessed_train', 'rb') as f:
+            with open(f'data/preprocessed_{type}_{data_name}.pickle', 'rb') as f:
                 encodings = pickle.load(f)
         except:
+            print("preprocess data")
             raw_dataset = load_dataset(self.data_name)
             context, question, answer = self._preprocessing_dataset(raw_dataset[type])
             assert len(context) == len(question) == len(answer['answer_start']) == len(answer['answer_end'])
 
-            print("Encoding dataset")
+            print("Encoding dataset (it will takes some time)")
             encodings = tokenizer(context, question, truncation='only_first', padding=True) # [CLS] context [SEP] question
+            print("add token position")
             self._add_token_positions(encodings, answer)
 
-            with open('data/preprocessed_train.pickle', 'wb') as f:
+            with open(f'data/preprocessed_{type}_{data_name}.pickle', 'wb') as f:
                 pickle.dump(encodings, f, pickle.HIGHEST_PROTOCOL)
+
         self.encodings = encodings
+
+
 
     def __getitem__(self, idx):
         return {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
@@ -68,21 +73,43 @@ class Dataset(torch.utils.data.Dataset):
             print("wrong dataset name")
             exit()
         return context, question, answer
+
+    def _char_to_token_with_possible(self, i, encodings, char_position, type):
+        if type == 'start':
+            possible_position = [0,-1,1]
+        else:
+            possible_position = [-1,-2,0]
+
+        for pp in possible_position:
+            position = encodings.char_to_token(i, char_position + pp)
+            if position != None:
+                break
+        
+        return position
+
         
     def _add_token_positions(self, encodings, answers):
+        import pdb
         start_positions = []
         end_positions = []
-
         for i in range(len(answers['answer_start'])):
             # char의 index로 되어있던것을 token의 index로 찾아준다.
-            start_positions.append(encodings.char_to_token(i, answers['answer_start'][i])) #batch_index, char_index
-            end_positions.append(encodings.char_to_token(i, answers['answer_end'][i] - 1))
-
-            # if start position is None, the answer passage has been truncated
+            if  answers['answer_start'][i] != -1: # for case of mrq
+                start_char = answers['answer_start'][i] 
+                end_char = answers['answer_end'][i]
+                start_position = self._char_to_token_with_possible(i, encodings, start_char,'start')
+                end_position = self._char_to_token_with_possible(i, encodings, end_char,'end')
+                start_positions.append(start_position)
+                end_positions.append(end_position)
+            else:
+                start_positions.append(None)
+                end_positions.append(None)
+            
             if start_positions[-1] is None:
                 start_positions[-1] = self.tokenizer.model_max_length
             if end_positions[-1] is None:
                 end_positions[-1] = self.tokenizer.model_max_length
 
         encodings.update({'start_positions': start_positions, 'end_positions': end_positions})
+
 
