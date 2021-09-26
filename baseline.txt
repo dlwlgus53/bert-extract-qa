@@ -22,3 +22,8 @@ coqa
 BERT-base finetune F1 score
 (single model)
 79.8	74.1	78.1
+
+
+coqa 4 epoch
+F1     EM
+0.475, 0.208

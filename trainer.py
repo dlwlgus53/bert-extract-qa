@@ -20,14 +20,15 @@ def train(model, train_loader, optimizer, device):
 
 
 
-def valid(model, dev_loader, device, tokenizer):
+def valid(model, dev_loader, device, tokenizer, log_file):
+
     model.eval()
     pred_texts = []
     ans_texts = []
     loss_sum = 0
-    F1 = 0
     print("Validation start")
     with torch.no_grad():
+        log_file.write("\n")
         t_dev_loader = tqdm(dev_loader)
         for iter,batch in enumerate(t_dev_loader):
             input_ids = batch['input_ids'].to(device)
@@ -44,7 +45,7 @@ def valid(model, dev_loader, device, tokenizer):
                 ans_texts.append(ans_text)
                 pred_texts.append(pred_text)
             if iter%100 ==0:
-                print(f"ans text : {ans_text}, pred_text : {pred_text}")                
+                log_file.write(f"ans text : {ans_text}\n pred_text : {pred_text}\n")         
             loss = outputs[0].to('cpu')
             loss_sum += loss
             t_dev_loader.set_description("Loss %.04f  | step %d" % (loss, iter))
