@@ -1,3 +1,4 @@
+import os
 import torch
 import argparse
 
@@ -28,6 +29,15 @@ parser.add_argument('--log_file' , type = str,  default = f'logs/log_{now_time}.
 parser.add_argument('--dataset_name' , required= True, type = str,  help = 'mrqa|squad|coqa')
 
 
+args = parser.parse_args()
+
+def makedirs(path): 
+   try: 
+        os.makedirs(path) 
+   except OSError: 
+       if not os.path.isdir(path): 
+           raise
+       
 
 args = parser.parse_args()
 
@@ -50,6 +60,9 @@ if __name__ =="__main__":
         print("use trained model")
         log_file.write("use trained model")
         model.load_state_dict(torch.load(args.pretrained_model))
+        
+    
+    makedirs("./data"); makedirs("./logs"); makedirs("./model");
 
 
     model.to(device)
