@@ -51,8 +51,6 @@ class Dataset(torch.utils.data.Dataset):
                     question.append(q)
                     answer['answer_start'].append(c.find(a))
                     answer['answer_end'].append(c.find(a) + len(a))
-                if i == 200:
-                    break
 
         elif self.data_name == 'coqa':
             for i, (c,qs,ans) in tqdm(enumerate(zip(dataset['story'],dataset['questions'],dataset['answers'])), total=len(dataset['story'])):
