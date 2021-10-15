@@ -6,7 +6,7 @@ import pdb
 # here, squad means squad2
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self,data_name, tokenizer,  type, max_length):
+    def __init__(self,data_name, tokenizer,  type):
         self.tokenizer = tokenizer
         self.data_name = data_name
         
@@ -22,7 +22,7 @@ class Dataset(torch.utils.data.Dataset):
             assert len(context) == len(question) == len(answer['answer_start']) == len(answer['answer_end'])
 
             print("Encoding dataset (it will takes some time)")
-            encodings = tokenizer(context, question, truncation='only_first', padding=True, max_length = max_length) # [CLS] context [SEP] question
+            encodings = tokenizer(context, question, truncation='only_first', padding=True) # [CLS] context [SEP] question
             print("add token position")
             self._add_token_positions(encodings, answer)
 
@@ -51,6 +51,8 @@ class Dataset(torch.utils.data.Dataset):
                     question.append(q)
                     answer['answer_start'].append(c.find(a))
                     answer['answer_end'].append(c.find(a) + len(a))
+                if i == 200:
+                    break
 
         elif self.data_name == 'coqa':
             for i, (c,qs,ans) in tqdm(enumerate(zip(dataset['story'],dataset['questions'],dataset['answers'])), total=len(dataset['story'])):
@@ -88,7 +90,6 @@ class Dataset(torch.utils.data.Dataset):
 
         
     def _add_token_positions(self, encodings, answers):
-        import pdb
         start_positions = []
         end_positions = []
         for i in range(len(answers['answer_start'])):

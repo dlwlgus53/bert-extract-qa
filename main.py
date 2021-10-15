@@ -19,14 +19,14 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--patience' ,  type = int, default=3)
 parser.add_argument('--batch_size' , type = int, default=8)
-parser.add_argument('--max_epoch' ,  type = int, default=20)
+parser.add_argument('--max_epoch' ,  type = int, default=2)
 parser.add_argument('--base_trained_model', type = str, default = 'bert-base-uncased', help =" pretrainned model from 🤗")
 parser.add_argument('--pretrained_model' , type = str,  help = 'pretrainned model')
 parser.add_argument('--gpu_number' , type = int,  default = 0, help = 'which GPU will you use?')
 parser.add_argument('--debugging' , type = bool,  default = False, help = "Don't save file")
 parser.add_argument('--log_file' , type = str,  default = f'logs/log_{now_time}.txt', help = 'Is this debuggin mode?')
 parser.add_argument('--dataset_name' , required= True, type = str,  help = 'mrqa|squad|coqa')
-parser.add_argument('--max_length' , type = int,  default = 256, help = 'max length')
+# parser.add_argument('--max_length' , type = int,  default = 512, help = 'max length')
 parser.add_argument('--do_train' , default = True, help = 'do train or not', action=argparse.BooleanOptionalAction)
 
 
@@ -44,10 +44,14 @@ args = parser.parse_args()
 
 @email_sender(recipient_emails=["jihyunlee@postech.ac.kr"], sender_email="knowing.deep.clean.water@gmail.com")
 def main():
+    makedirs("./data"); makedirs("./logs"); makedirs("./model");
+    
+    
+    
     tokenizer = AutoTokenizer.from_pretrained(args.base_trained_model, use_fast=True)
     model = AutoModelForQuestionAnswering.from_pretrained(args.base_trained_model)
-    train_dataset = Dataset(args.dataset_name, tokenizer, "train", args.max_length)
-    val_dataset = Dataset(args.dataset_name, tokenizer,  "validation", args.max_length) 
+    train_dataset = Dataset(args.dataset_name, tokenizer, "train")
+    val_dataset = Dataset(args.dataset_name, tokenizer,  "validation") 
 
     train_loader = DataLoader(train_dataset, args.batch_size, shuffle=True)
     dev_loader = DataLoader(val_dataset, args.batch_size, shuffle=True)
@@ -57,7 +61,6 @@ def main():
     torch.cuda.set_device(device) # change allocation of current GPU
     torch.cuda.empty_cache()
 
-    makedirs("./data"); makedirs("./logs"); makedirs("./model");
 
     if args.pretrained_model:
         print("use trained model")
