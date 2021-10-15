@@ -4,29 +4,30 @@ import argparse
 
 from dataset import Dataset
 from utils import compute_F1, compute_exact_match
-from transformers import BertForQuestionAnswering
 from torch.utils.data import DataLoader
 from transformers import AdamW
 from tqdm import tqdm
 from trainer import train, valid
-from transformers import BertTokenizerFast
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer, AdamW
 from torch.utils.tensorboard import SummaryWriter
+from knockknock import email_sender
 
 import datetime
 now_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
 writer = SummaryWriter()
-
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--patience' ,  type = int, default=3)
 parser.add_argument('--batch_size' , type = int, default=8)
 parser.add_argument('--max_epoch' ,  type = int, default=20)
+parser.add_argument('--base_trained_model', type = str, default = 'bert-base-uncased', help =" pretrainned model from 🤗")
 parser.add_argument('--pretrained_model' , type = str,  help = 'pretrainned model')
 parser.add_argument('--gpu_number' , type = int,  default = 0, help = 'which GPU will you use?')
 parser.add_argument('--debugging' , type = bool,  default = False, help = "Don't save file")
 parser.add_argument('--log_file' , type = str,  default = f'logs/log_{now_time}.txt', help = 'Is this debuggin mode?')
 parser.add_argument('--dataset_name' , required= True, type = str,  help = 'mrqa|squad|coqa')
+parser.add_argument('--max_length' , type = int,  default = 256, help = 'max length')
+parser.add_argument('--do_train' , default = True, help = 'do train or not', action=argparse.BooleanOptionalAction)
 
 
 args = parser.parse_args()
@@ -41,40 +42,41 @@ def makedirs(path):
 
 args = parser.parse_args()
 
-if __name__ =="__main__":
-
-    tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
-    train_dataset = Dataset(args.dataset_name, tokenizer, "train")
-    val_dataset = Dataset(args.dataset_name, tokenizer,  "validation") 
-    model = BertForQuestionAnswering.from_pretrained("bert-base-uncased")
-    device = torch.device(f'cuda:{args.gpu_number}' if torch.cuda.is_available() else 'cpu')
-    torch.cuda.set_device(device) # change allocation of current GPU
+@email_sender(recipient_emails=["jihyunlee@postech.ac.kr"], sender_email="knowing.deep.clean.water@gmail.com")
+def main():
+    tokenizer = AutoTokenizer.from_pretrained(args.base_trained_model, use_fast=True)
+    model = AutoModelForQuestionAnswering.from_pretrained(args.base_trained_model)
+    train_dataset = Dataset(args.dataset_name, tokenizer, "train", args.max_length)
+    val_dataset = Dataset(args.dataset_name, tokenizer,  "validation", args.max_length) 
 
     train_loader = DataLoader(train_dataset, args.batch_size, shuffle=True)
     dev_loader = DataLoader(val_dataset, args.batch_size, shuffle=True)
-    optimizer = AdamW(model.parameters(), lr=5e-5)
+    optimizer = AdamW(model.parameters(), lr=5e-5, weight_decay=0.01)
     log_file = open(args.log_file, 'w')
+    device = torch.device(f'cuda:{args.gpu_number}' if torch.cuda.is_available() else 'cpu')
+    torch.cuda.set_device(device) # change allocation of current GPU
+    torch.cuda.empty_cache()
 
+    makedirs("./data"); makedirs("./logs"); makedirs("./model");
 
     if args.pretrained_model:
         print("use trained model")
         log_file.write("use trained model")
         model.load_state_dict(torch.load(args.pretrained_model))
-        
     
-    makedirs("./data"); makedirs("./logs"); makedirs("./model");
-
-
+    log_file.write(str(args))
     model.to(device)
     penalty = 0
     min_loss = float('inf')
+
     for epoch in range(args.max_epoch):
         print(f"Epoch : {epoch}")
-        train(model, train_loader, optimizer, device)
+        if args.do_train:
+            train(model, train_loader, optimizer, device)
 
-        EM = 0
-        F1 = 0 
         pred_texts, ans_texts, loss = valid(model, dev_loader, device, tokenizer,log_file)
+        
+        EM, F1 = 0, 0
         for iter, (pred_text, ans_text) in enumerate(zip(pred_texts, ans_texts)):
             EM += compute_exact_match(pred_text, ans_text)
             F1 += compute_F1(pred_text, ans_text)
@@ -100,6 +102,12 @@ if __name__ =="__main__":
                 break
     writer.close()
     log_file.close()
+    
+    
+    return {'EM' : EM/iter, 'F1' : F1/iter}
 
+    
+if __name__ =="__main__":
+    main()
 
-
+    

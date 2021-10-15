@@ -2,28 +2,27 @@ from datasets import load_dataset
 import torch
 import pickle
 from tqdm import tqdm
-batch_size = 4
 import pdb
-print("Load Tokenizer")
 # here, squad means squad2
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self,data_name, tokenizer,  type):
+    def __init__(self,data_name, tokenizer,  type, max_length):
         self.tokenizer = tokenizer
         self.data_name = data_name
+        
 
         try:
             print("Load processed data")
             with open(f'data/preprocessed_{type}_{data_name}.pickle', 'rb') as f:
                 encodings = pickle.load(f)
         except:
-            print("preprocess data")
+            print("preprocessing data...")
             raw_dataset = load_dataset(self.data_name)
             context, question, answer = self._preprocessing_dataset(raw_dataset[type])
             assert len(context) == len(question) == len(answer['answer_start']) == len(answer['answer_end'])
 
             print("Encoding dataset (it will takes some time)")
-            encodings = tokenizer(context, question, truncation='only_first', padding=True) # [CLS] context [SEP] question
+            encodings = tokenizer(context, question, truncation='only_first', padding=True, max_length = max_length) # [CLS] context [SEP] question
             print("add token position")
             self._add_token_positions(encodings, answer)
 
