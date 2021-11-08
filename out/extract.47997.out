@@ -1,0 +1,44 @@
+SLURM_SUBMIT_DIR=/home/jihyunlee/bert-extract-qa
+CUDA_HOME=/opt/ohpc/pub/apps/cuda-11.2
+CUDA_VISIBLE_DEVICES=7
+CUDA_VERSION=11.2
+Start
+conda PATH 
+source  /home/jihyunlee/anaconda3/etc/profile.d/conda.sh
+conda activate QA 
+Some weights of the model checkpoint at bert-base-uncased were not used when initializing BertForQuestionAnswering: ['cls.predictions.bias', 'cls.predictions.transform.dense.weight', 'cls.predictions.transform.dense.bias', 'cls.predictions.decoder.weight', 'cls.seq_relationship.weight', 'cls.seq_relationship.bias', 'cls.predictions.transform.LayerNorm.weight', 'cls.predictions.transform.LayerNorm.bias']
+- This IS expected if you are initializing BertForQuestionAnswering from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing BertForQuestionAnswering from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+Some weights of BertForQuestionAnswering were not initialized from the model checkpoint at bert-base-uncased and are newly initialized: ['qa_outputs.weight', 'qa_outputs.bias']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Reusing dataset mrqa (/home/jihyunlee/.cache/huggingface/datasets/mrqa/plain_text/1.1.0/1f2cf5ac32b43f864e6f91d384057a16b69b7d13ba9bcaa200ac277c90938d19)
+Load processed data
+preprocessing data...
+  0%|          | 0/3 [00:00<?, ?it/s] 33%|███▎      | 1/3 [00:08<00:16,  8.45s/it] 67%|██████▋   | 2/3 [00:08<00:03,  3.56s/it]100%|██████████| 3/3 [00:09<00:00,  2.42s/it]100%|██████████| 3/3 [00:09<00:00,  3.22s/it]
+preprocessing mrqa data
+Encoding dataset (it will takes some time)
+add token position
+Traceback (most recent call last):
+  File "/home/jihyunlee/bert-extract-qa/dataset.py", line 18, in __init__
+    with open(f'data/preprocessed_{type}_{data_name}.pickle', 'rb') as f:
+FileNotFoundError: [Errno 2] No such file or directory: 'data/preprocessed_train_mrqa.pickle'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jihyunlee/bert-extract-qa/main.py", line 111, in <module>
+    main()
+  File "/home/jihyunlee/bert-extract-qa/main.py", line 50, in main
+    train_dataset = Dataset(args.dataset_name, tokenizer, "train")
+  File "/home/jihyunlee/bert-extract-qa/dataset.py", line 29, in __init__
+    self._add_token_positions(encodings, answer)
+  File "/home/jihyunlee/bert-extract-qa/dataset.py", line 104, in _add_token_positions
+    end_position = self._char_to_token_with_possible(i, encodings, end_char,'end') +1
+TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'
+ conda deactivate QA 
+deactivate does not accept arguments
+remainder_args: ['QA']
+
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+             47997    2080ti  extract jihyunle  R       6:40      1 n5
+##### END #####

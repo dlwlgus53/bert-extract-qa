@@ -82,15 +82,15 @@ class Dataset(torch.utils.data.Dataset):
             possible_position = [-1,-2,0]
 
         for pp in possible_position:
-            position = encodings.char_to_token(i, char_position + pp, sequence_index = 1)
+            position = encodings.char_to_token(i, char_position + pp, sequence_index = 1) 
             if position != None:
+                position +=1
                 break
         
         return position
 
         # self.tokenizer.convert_tokens_to_string(encodings[i].tokens)
     def _add_token_positions(self, encodings, answers):
-        pdb.set_trace()
         # convert_ids_to_tokens
         start_positions = []
         end_positions = []
@@ -102,7 +102,7 @@ class Dataset(torch.utils.data.Dataset):
                 end_char = answers['answer_end'][i] 
                 
                 start_position = self._char_to_token_with_possible(i, encodings, start_char,'start')
-                end_position = self._char_to_token_with_possible(i, encodings, end_char,'end') +1
+                end_position = self._char_to_token_with_possible(i, encodings, end_char,'end')
                 
                 start_positions.append(start_position)
                 end_positions.append(end_position)
