@@ -42,12 +42,9 @@ def makedirs(path):
 
 args = parser.parse_args()
 
-@email_sender(recipient_emails=["jihyunlee@postech.ac.kr"], sender_email="knowing.deep.clean.water@gmail.com")
+# @email_sender(recipient_emails=["jihyunlee@postech.ac.kr"], sender_email="knowing.deep.clean.water@gmail.com")
 def main():
     makedirs("./data"); makedirs("./logs"); makedirs("./model");
-    
-    
-    
     tokenizer = AutoTokenizer.from_pretrained(args.base_trained_model, use_fast=True)
     model = AutoModelForQuestionAnswering.from_pretrained(args.base_trained_model)
     train_dataset = Dataset(args.dataset_name, tokenizer, "train")

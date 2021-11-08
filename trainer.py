@@ -1,12 +1,10 @@
 
 import torch
-from tqdm import tqdm
 
 def train(model, train_loader, optimizer, device):
         model.train()
         loss_sum = 0
-        t_train_loader = tqdm(train_loader)
-        for batch in t_train_loader:
+        for batch in train_loader:
             optimizer.zero_grad()
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
@@ -16,7 +14,7 @@ def train(model, train_loader, optimizer, device):
             loss = outputs[0]
             loss.backward()
             optimizer.step()
-            t_train_loader.set_description("Loss %.04f" % (loss))
+            train_loader.set_description("Loss %.04f" % (loss))
 
 
 
@@ -29,8 +27,7 @@ def valid(model, dev_loader, device, tokenizer, log_file):
     print("Validation start")
     with torch.no_grad():
         log_file.write("\n")
-        t_dev_loader = tqdm(dev_loader)
-        for iter,batch in enumerate(t_dev_loader):
+        for iter,batch in enumerate(dev_loader):
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
             start_positions = batch['start_positions'].to(device)
@@ -48,7 +45,7 @@ def valid(model, dev_loader, device, tokenizer, log_file):
                 log_file.write(f"ans text : {ans_text}\n pred_text : {pred_text}\n")         
             loss = outputs[0].to('cpu')
             loss_sum += loss
-            t_dev_loader.set_description("Loss %.04f  | step %d" % (loss, iter))
+            dev_loader.set_description("Loss %.04f  | step %d" % (loss, iter))
     
     return pred_texts, ans_texts, loss_sum/iter
         
