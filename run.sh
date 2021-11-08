@@ -34,7 +34,7 @@ conda activate QA
 export PYTHONPATH=.
 
 
-python  $HOME/bert-extract-qa/main.py --dataset_name mrqa --batch_size 16
+python  $HOME/bert-extract-qa/main.py --dataset_name mrqa --batch_size 4
 
 echo " conda deactivate QA "
 

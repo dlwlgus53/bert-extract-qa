@@ -14,7 +14,6 @@ def train(model, train_loader, optimizer, device):
             loss = outputs[0]
             loss.backward()
             optimizer.step()
-            train_loader.set_description("Loss %.04f" % (loss))
 
 
 
@@ -45,7 +44,6 @@ def valid(model, dev_loader, device, tokenizer, log_file):
                 log_file.write(f"ans text : {ans_text}\n pred_text : {pred_text}\n")         
             loss = outputs[0].to('cpu')
             loss_sum += loss
-            dev_loader.set_description("Loss %.04f  | step %d" % (loss, iter))
     
     return pred_texts, ans_texts, loss_sum/iter
         
