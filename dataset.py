@@ -8,24 +8,24 @@ from transformers import AutoTokenizer
 # here, squad means squad2
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self,data_name, tokenizer,  type):
+    def __init__(self,data_name, tokenizer,  type, logger):
         self.tokenizer = tokenizer
         self.data_name = data_name
-        
+        self.logger = logger
 
         try:
-            print("Load processed data")
+            logger.info("Load processed data")
             with open(f'data/preprocessed_{type}_{data_name}.pickle', 'rb') as f:
                 encodings = pickle.load(f)
         except:
-            print("preprocessing data...")
+            logger.info("preprocessing data...")
             raw_dataset = load_dataset(self.data_name)
             context, question, answer = self._preprocessing_dataset(raw_dataset[type])
             assert len(context) == len(question) == len(answer['answer_start']) == len(answer['answer_end'])
 
-            print("Encoding dataset (it will takes some time)")
+            logger.info("Encoding dataset (it will takes some time)")
             encodings = tokenizer(question, context, truncation='only_second', padding=True) # [CLS] question [SEP] context
-            print("add token position")
+            logger.info("add token position")
             self._add_token_positions(encodings, answer)
 
             with open(f'data/preprocessed_{type}_{data_name}.pickle', 'wb') as f:
@@ -43,7 +43,7 @@ class Dataset(torch.utils.data.Dataset):
         context = []
         question = []
         answer = {'answer_start' : [], 'answer_end' : []}
-        print(f"preprocessing {self.data_name} data")
+        self.logger.info(f"preprocessing {self.data_name} data")
         if self.data_name == "mrqa":
             for i, (c, q, ans) in enumerate(zip(dataset['context'], dataset['question'],dataset['answers'])):
                 for a in ans:
@@ -71,7 +71,7 @@ class Dataset(torch.utils.data.Dataset):
                     answer['answer_end'].append(s_idx + len(text))
         
         else :
-            print("wrong dataset name")
+            self.logger.info("wrong dataset name")
             exit()
         return context, question, answer
 

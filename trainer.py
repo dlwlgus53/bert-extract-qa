@@ -1,10 +1,10 @@
 
 import torch
 
-def train(model, train_loader, optimizer, device):
+def train(model, train_loader, optimizer, device, logger):
         model.train()
         loss_sum = 0
-        for batch in train_loader:
+        for iter, batch in enumerate(train_loader):
             optimizer.zero_grad()
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
@@ -15,17 +15,22 @@ def train(model, train_loader, optimizer, device):
             loss.backward()
             optimizer.step()
 
+            if (iter + 1) % 100 == 0:
+                logger.info(' step : {}/{} Loss: {:.4f}'.format(
+                    iter, 
+                    str(len(train_loader)),
+                    loss.detach())
+                )
+            
 
 
-def valid(model, dev_loader, device, tokenizer, log_file):
+def valid(model, dev_loader, device, tokenizer, logger):
 
     model.eval()
     pred_texts = []
     ans_texts = []
     loss_sum = 0
-    print("Validation start")
     with torch.no_grad():
-        log_file.write("\n")
         for iter,batch in enumerate(dev_loader):
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
@@ -40,8 +45,6 @@ def valid(model, dev_loader, device, tokenizer, log_file):
                 pred_text = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[b][pred_start_positions[b]:pred_end_positions[b]+1]))
                 ans_texts.append(ans_text)
                 pred_texts.append(pred_text)
-            if iter%100 ==0:
-                log_file.write(f"ans text : {ans_text}\n pred_text : {pred_text}\n")         
             loss = outputs[0].to('cpu')
             loss_sum += loss
     

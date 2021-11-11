@@ -11,3 +11,20 @@ Some weights of the model checkpoint at bert-base-uncased were not used when ini
 - This IS NOT expected if you are initializing BertForQuestionAnswering from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
 Some weights of BertForQuestionAnswering were not initialized from the model checkpoint at bert-base-uncased and are newly initialized: ['qa_outputs.weight', 'qa_outputs.bias']
 You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Load processed data
+Load processed data
+Epoch : 0
+Validation start
+Epoch : 0, EM : 0.5191, F1 : 0.6146, Loss : 1.5515
+New best
+Epoch : 1
+Validation start
+Epoch : 1, EM : 0.5368, F1 : 0.6371, Loss : 1.5028
+New best
+ conda deactivate QA 
+deactivate does not accept arguments
+remainder_args: ['QA']
+
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+             48009    2080ti  extract jihyunle  R   15:50:45      1 n3
+##### END #####
